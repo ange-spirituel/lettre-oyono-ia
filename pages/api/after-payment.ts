@@ -1,7 +1,6 @@
-// /pages/api/after-payment.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-import { generatePDF } from '@/utils/create-pdf';
+import { createPdfBuffer } from '@/utils/create-pdf';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2022-11-15',
@@ -32,13 +31,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = await response.json();
 
-    const pdfBuffer = await generatePDF(
-      data.letter,
-      metadata.type,
-      metadata.name,
-      metadata.includeName === '1',
-      metadata.includeDate === '1'
-    );
+    const pdfBuffer = await createPdfBuffer({
+      prompt: data.letter,
+      type: metadata.type,
+      auteur: metadata.includeName === '1' ? metadata.name : '',
+      includeDate: metadata.includeDate === '1',
+    });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=lettre.pdf');
@@ -48,4 +46,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'Échec génération PDF après paiement.' });
   }
 }
-
