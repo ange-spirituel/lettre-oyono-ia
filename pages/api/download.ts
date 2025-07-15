@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { generatePDF } from '@/utils/create-pdf';
+import { createPdfBuffer } from '@/utils/create-pdf';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end('Méthode non autorisée');
@@ -8,7 +8,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!letter) return res.status(400).json({ error: 'Lettre manquante' });
 
   try {
-    const pdfBuffer = await generatePDF(letter, type, name, includeName, includeDate);
+    const pdfBuffer = await createPdfBuffer({
+      prompt: letter,
+      type,
+      auteur: includeName ? name : undefined,
+      includeDate: includeDate === true || includeDate === '1', // Support booléen ou string
+    });
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=lettre.pdf');
     res.send(pdfBuffer);
